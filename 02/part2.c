@@ -6,16 +6,21 @@
 #define MAX_LEVELS 8
 
 /* test */
-/* #define FILE_NAME "test.txt" */
+#define FILE_NAME "test.txt"
 
 /* actual */
-#define FILE_NAME "input.txt"
+/* #define FILE_NAME "input.txt" */
 
-typedef enum {
-  VerySafe = 0,
-  KindaSafe = 1,
-  NotSafe = 2,
-} Safeness;
+// big number to make sure non-spliced arrays are not spliced
+#define NOT_SPLICED 16
+
+int spliced_get(int *line, int index, int splicing_index) {
+  if (index < splicing_index) {
+    return line[index];
+  } else {
+    return line[index + 1];
+  }
+}
 
 int intcmp(int a, int b) { return (a > b) - (a < b); }
 
@@ -33,23 +38,27 @@ int init_direction(int *head) {
   }
 }
 
-int is_pair_safe(int prev, int cur, int direction) {
+int is_safe(int prev, int cur, int direction) {
   int diff = abs(cur - prev);
   return (intcmp(prev, cur) == direction) && (diff >= 1 && diff <= 3);
 }
 
-Safeness window_edge_safeness(int *head, int direction) {
-  printf("%d %d ", head[0], head[1]);
-  return !is_pair_safe(head[0], head[1], direction);
+int is_window_safe(int *head, int start_index, int direction,
+                   int splicing_index) {
+  return is_safe(spliced_get(head, start_index, splicing_index),
+                 spliced_get(head, start_index + 1, splicing_index), direction);
 }
 
-Safeness window_safeness(int *head, int direction) {
-  if (is_pair_safe(head[0], head[1], direction)) {
-    return VerySafe;
-  } else if (is_pair_safe(head[0], head[2], direction)) {
-    return KindaSafe;
+int first_unsafe_index(int *line, int max, int direction, int splicing_index) {
+  int i, result;
+  for (i = 0;
+       i < max && (result = is_window_safe(line, i, direction, splicing_index));
+       i++)
+    ;
+  if (result) {
+    return 0;
   } else {
-    return NotSafe;
+    return i;
   }
 }
 
@@ -58,46 +67,27 @@ int main() {
   if (!file)
     return 0;
   char strline[MAX_STRING_LEN], *strhead;
-  int intline[MAX_LEVELS + 1], *inthead;
-  int i, level, direction, report_safeness, value_safeness, advancement,
-      number_safe = 0;
+  int intline[MAX_LEVELS];
+  int i, max, level, direction, failure_index, number_safe = 0;
   while (fgets(strline, MAX_STRING_LEN, file)) {
     strhead = strline;
-    inthead = intline;
     // SAFETY: assume that MAX_LEVELS is correct
     for (i = 0; (level = strtol(strhead, &strhead, 10)) != 0; i++) {
       printf("%d ", level);
       intline[i] = level;
     }
-    printf(":: ");
-    direction = init_direction(inthead);
-    value_safeness = window_edge_safeness(inthead, direction);
-    report_safeness = 2 - value_safeness;
-    advancement = value_safeness + 1;
-    inthead += advancement;
-    i -= advancement;
-    while (i > 2) {
-      /* printf("%d ", inthead[0]); */
-      value_safeness = window_safeness(inthead, direction);
-      report_safeness -= value_safeness;
-      advancement = value_safeness + 1;
-      inthead += advancement;
-      i -= advancement;
+    max = i;
+    direction = init_direction(intline);
+    if (!(failure_index =
+              first_unsafe_index(intline, max, direction, NOT_SPLICED)) ||
+        (!first_unsafe_index(intline, max - 1, direction, failure_index - 1) ||
+         !first_unsafe_index(intline, max - 1, direction, failure_index) ||
+         !first_unsafe_index(intline, max - 1, direction, failure_index + 1))) {
+      printf("safe! %d\n", failure_index);
+      number_safe++;
+    } else {
+      printf("UNSAFE?????\n");
     }
-    /* if (i == 1) { */
-    /*   printf("!"); */
-    /*   // we've got one more to check, */
-    /*   // but we do need to move the head back before that */
-    /*   i++; */
-    /*   inthead--; */
-    /* } */
-    if (i == 2) {
-      printf("! ");
-      // we've still got one more to check
-      report_safeness -= window_edge_safeness(inthead, direction);
-    }
-    printf(":: %d\n", report_safeness);
-    number_safe += (report_safeness > 0);
   }
   printf("%d\n", number_safe);
   return 0;
