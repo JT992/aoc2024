@@ -34,7 +34,9 @@ int init_direction(int *head) {
   } else if (sum < 0) {
     return -1;
   } else {
-    return 0;
+    // SOMETHING. ANYTHING. JUST NOT ZERO.
+    // PLEASE GOD I WANT TO MOVE ON
+    return -5;
   }
 }
 
@@ -78,15 +80,19 @@ int main() {
     }
     max = i;
     direction = init_direction(intline);
-    if (!(failure_index =
-              first_unsafe_index(intline, max, direction, NOT_SPLICED)) ||
-        (!first_unsafe_index(intline, max - 1, direction, failure_index - 1) ||
-         !first_unsafe_index(intline, max - 1, direction, failure_index) ||
-         !first_unsafe_index(intline, max - 1, direction, failure_index + 1))) {
-      printf("safe! %d\n", failure_index);
+    if ((failure_index =
+             first_unsafe_index(intline, max, direction, NOT_SPLICED))) {
+      printf("UNSAFE????? %d\n", failure_index);
+      for (i = 0;
+           i < max &&
+           (failure_index = first_unsafe_index(intline, max - 1, direction, i));
+           i++)
+        ;
+      ;
+    }
+    if (!failure_index) {
+      printf("safe! %d\n", i);
       number_safe++;
-    } else {
-      printf("UNSAFE?????\n");
     }
   }
   printf("%d\n", number_safe);
