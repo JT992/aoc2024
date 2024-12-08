@@ -16,11 +16,23 @@ const ASSUMED_FILE: &str = TEST_FILE;
 #[cfg(not(debug_assertions))]
 const ASSUMED_FILE: &str = INPUT_FILE;
 
+#[macro_export]
+macro_rules! selection {
+    () => {
+        pub fn selection() -> [$crate::Part; 2] {
+            [part1, part2]
+        }
+    };
+}
+
 #[derive(Debug, Parser)]
 #[command(version, about)]
 struct Args {
     /// day to execute
     day: usize,
+
+    /// part to execute (1 or 2)
+    part: usize,
 
     #[arg(short, long, default_value_t = Mode::Assume)]
     /// run test, puzzle input, or assume from build type
@@ -36,6 +48,8 @@ enum Mode {
     /// run input
     Input,
 }
+
+type Part = for<'a> fn(&'a str) -> usize;
 
 impl std::fmt::Display for Mode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -59,10 +73,13 @@ fn main() {
         Mode::Input => INPUT_FILE,
     };
     let file = read_file(&day, file_name);
-    let funcs = [day03::main];
-    let func = funcs
+    let selected_parts = [day03::selection]
         .get(args.day - 3)
-        .expect("expected function to exist. have you updated the funcs list?");
+        .expect("expected selectors to exist. have you updated the selector list?")(
+    );
+    let func = selected_parts
+        .get(args.part - 1)
+        .expect("expected `part` to be 1 or 2");
     println!("{}", func(&file));
 }
 
