@@ -1,10 +1,10 @@
 super::selection!();
 
-pub fn part1(_file: String) -> usize {
+pub fn part1(_file: &str) -> usize {
     todo!()
 }
 
-pub fn part2(_file: String) -> usize {
+pub fn part2(_file: &str) -> usize {
     todo!()
 }
 
