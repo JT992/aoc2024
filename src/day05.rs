@@ -15,6 +15,16 @@ super::selection!();
 // (Ordering[earlier] == vec![later])
 type Ordering = HashMap<u8, Vec<u8>>;
 
+fn ordering_ord(ordering: &Ordering, a: u8, b: u8) -> std::cmp::Ordering {
+    // yes. I did try to make `Ordering` a struct and make this a method of it.
+    // but it doesn't like you can treat methods as functions with addresses?
+    // this is more fun, anyway.
+    bool::cmp(
+        &ordering.get(&b).is_some_and(|v| v.contains(&a)),
+        &ordering.get(&a).is_some_and(|v| v.contains(&b)),
+    )
+}
+
 fn read_ordering_rule(c: &Captures) -> (u8, u8) {
     let (_, [earlier, later]) = c.extract();
     (earlier.parse::<u8>().unwrap(), later.parse::<u8>().unwrap())
@@ -41,27 +51,48 @@ fn check_instruction_validity(instructions: &[u8], ordering: &Ordering) -> bool 
     true
 }
 
-pub fn part1(file: &str) -> usize {
-    let mut ordering = Ordering::new();
+fn create_ordering(file: &str) -> Ordering {
+    let mut ordering = Ordering::default();
     RE_ORDERING_RULE
         .captures_iter(file)
         .map(|c| read_ordering_rule(&c))
         .map(|(e, l)| add_to_ordering(e, l, &mut ordering))
         .last();
+    ordering
+}
+
+fn collect_instructions(file: &str) -> Vec<Vec<u8>> {
     RE_PRINT_INSTRUCTION
         .find_iter(file)
         .map(|m| {
             m.as_str()
                 .split(',')
                 .map(|v| v.parse::<u8>().unwrap())
-                .collect::<Vec<u8>>()
+                .collect()
         })
+        .collect()
+}
+
+pub fn part1(file: &str) -> usize {
+    let ordering = create_ordering(file);
+    collect_instructions(file)
+        .iter()
         .filter(|i| check_instruction_validity(i, &ordering))
         .map(|i| i[i.len() / 2])
         .map(usize::from)
         .sum()
 }
 
-pub fn part2(_file: &str) -> usize {
-    todo!()
+pub fn part2(file: &str) -> usize {
+    let ordering = create_ordering(file);
+    let mut all_instructions = collect_instructions(file);
+    let invalid_instructions = all_instructions
+        .iter_mut()
+        .filter(|i| !check_instruction_validity(i, &ordering));
+    let mut sum = 0;
+    for i in invalid_instructions {
+        i.sort_unstable_by(|a, b| ordering_ord(&ordering, *a, *b));
+        sum += usize::from(i[i.len() / 2]);
+    }
+    sum
 }
