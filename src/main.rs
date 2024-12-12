@@ -8,6 +8,7 @@ use clap::{Parser, ValueEnum};
 mod day03;
 mod day04;
 mod day05;
+mod day06;
 
 const TEST_FILE: &str = "test.txt";
 const INPUT_FILE: &str = "input.txt";
@@ -75,9 +76,14 @@ fn main() {
         Mode::Input => INPUT_FILE,
     };
     let file = read_file(&day, file_name);
-    let selected_parts = [day03::selection, day04::selection, day05::selection]
-        .get(args.day - 3)
-        .expect("expected selectors to exist. have you updated the selector list?")(
+    let selected_parts = [
+        day03::selection,
+        day04::selection,
+        day05::selection,
+        day06::selection,
+    ]
+    .get(args.day - 3)
+    .expect("expected selectors to exist. have you updated the selector list?")(
     );
     let func = selected_parts
         .get(args.part - 1)
